@@ -1,15 +1,25 @@
 const fs = require("fs");
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const app = express();
+const server = http.createServer(app);
+const localhostRegex = /http:\/\/localhost/;
+const io = new Server(server, {
+  cors: { origin: localhostRegex },
+});
+
 const product = require("./api/product");
 const index = require("./api/index");
-const server = require("http").createServer(app);
-const io = require("socket.io")(server);
 
 app.use(express.json({ extended: false }));
 
 app.use("/api/product", product);
-app.use("/", index);
+app.use("/health", index);
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
 
 const PORT = process.env.PORT || 8080;
 const DATA_FILE = __dirname + "/order-data.json";
@@ -57,4 +67,4 @@ io.on("connection", (socket) => {
   });
 });
 
-app.listen(PORT, () => console.log(`Server is running in port ${PORT}`));
+server.listen(PORT, () => console.log(`Server is running in port ${PORT}`));
